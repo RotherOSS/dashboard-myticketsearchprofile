@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<otobo_package version="1.0">
+    <Name>Dashboard-MyTicketSearchProfile</Name>
+    <Version>0.0.0</Version>
+    <Framework>11.0.x</Framework>
+    <Vendor>Rother OSS GmbH</Vendor>
+    <URL>https://otobo.io/</URL>
+    <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
+    <Description Lang="en">Provides a widget in the Dashboard with the tickets returned by one of the user ticket search templates</Description>
+    <Filelist>
+        <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/AgentDashboardTicketProfileSearch.tt" />
+        <File Permission="660" Location="Kernel/Output/HTML/Dashboard/TicketProfileSearch.pm" />
+        <File Permission="660" Location="Kernel/Config/Files/XML/TicketSearchTemplate.xml" />
+    </Filelist>
+</otobo_package>
+
