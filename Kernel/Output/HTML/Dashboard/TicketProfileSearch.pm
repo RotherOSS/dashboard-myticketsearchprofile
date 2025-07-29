@@ -255,10 +255,10 @@ sub new {
         }
     }
 
-    $Self->{PrefSearchTemplate}   = 'UserDashboardPref' . $Self->{Name} . '-SearchTemplate';
-    $Self->{PrefKeyShown}   = 'UserDashboardPref' . $Self->{Name} . '-Shown';
-    $Self->{PrefKeyColumns} = 'UserDashboardPref' . $Self->{Name} . '-Columns';
-    $Self->{PageShown}      = $Kernel::OM->Get('Kernel::Output::HTML::Layout')->{ $Self->{PrefKeyShown} }
+    $Self->{PrefSearchTemplate} = 'UserDashboardPref' . $Self->{Name} . '-SearchTemplate';
+    $Self->{PrefKeyShown}       = 'UserDashboardPref' . $Self->{Name} . '-Shown';
+    $Self->{PrefKeyColumns}     = 'UserDashboardPref' . $Self->{Name} . '-Columns';
+    $Self->{PageShown}          = $Kernel::OM->Get('Kernel::Output::HTML::Layout')->{ $Self->{PrefKeyShown} }
         || $Self->{Config}->{Limit};
     $Self->{StartHit} = int( $ParamObject->GetParam( Param => 'StartHit' ) || 1 );
 
@@ -422,19 +422,18 @@ sub Preferences {
     }
 
     my $SearchProfileObject = $Kernel::OM->Get('Kernel::System::SearchProfile');
-    my %Profiles = $SearchProfileObject->SearchProfileList(
+    my %Profiles            = $SearchProfileObject->SearchProfileList(
         Base      => 'TicketSearch',
         UserLogin => $Self->{UserLogin},
     );
 
     my @Params = (
         {
-            Desc  => Translatable('Stored Search Profiles'),
-            Name  => $Self->{PrefSearchTemplate},
-            Block => 'Option',
-            Data  => \%Profiles,
+            Desc        => Translatable('Stored Search Profiles'),
+            Name        => $Self->{PrefSearchTemplate},
+            Block       => 'Option',
+            Data        => \%Profiles,
             SelectedID  => $Self->{PageShown},
-            Multiple    => 1,   # TODO: Check this, does not really work?
             Translation => 0,
         },
         {
@@ -890,8 +889,8 @@ sub Run {
         Data => {
             %Param,
             %{ $Self->{Config} },
-            Name => $Self->{Name},
-            ProfileTemplateName => $Preferences{$Self->{PrefSearchTemplate}},
+            Name                => $Self->{Name},
+            ProfileTemplateName => $Preferences{ $Self->{PrefSearchTemplate} },
             %{$Summary},
         },
     );
@@ -2255,22 +2254,12 @@ sub _ColumnFilterJSON {
     return $JSON;
 }
 
-use Data::Dumper;
-
 sub _SearchParamsGet {
     my ( $Self, %Param ) = @_;
-
-    #print STDERR Dumper \%Param;
-    #print STDERR Dumper $Self;
 
     # get all search base attributes
     my %TicketSearch;
     my %DynamicFieldsParameters;
-
-    #my @Params = split /;/, $Self->{Config}->{Attributes};
-    my @Params = ('Title=%Webservice%');
-    #my @Params = ('StateType=open');
-    print STDERR Dumper \@Params;
 
     # read user preferences and config to get columns that
     # should be shown in the dashboard widget (the preferences
@@ -2278,15 +2267,13 @@ sub _SearchParamsGet {
     my %Preferences = $Kernel::OM->Get('Kernel::System::User')->GetPreferences(
         UserID => $Self->{UserID},
     );
-    print STDERR Dumper \%Preferences;
 
     my $SearchProfileObject = $Kernel::OM->Get('Kernel::System::SearchProfile');
-    my %Profile = $SearchProfileObject->SearchProfileGet(
+    my %Profile             = $SearchProfileObject->SearchProfileGet(
         Base      => 'TicketSearch',
-        Name      => $Preferences{$Self->{PrefSearchTemplate}},
+        Name      => $Preferences{ $Self->{PrefSearchTemplate} },
         UserLogin => $Self->{UserLogin},
     );
-    print STDERR Dumper \%Profile;
 
     # get column names from Preferences
     my $PreferencesColumn = $Kernel::OM->Get('Kernel::System::JSON')->Decode(
@@ -2409,76 +2396,19 @@ sub _SearchParamsGet {
     }
 
     # get queue object
-    my $QueueObject = $Kernel::OM->Get('Kernel::System::Queue');
+    my $QueueObject  = $Kernel::OM->Get('Kernel::System::Queue');
+    my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
 
-    STRING:
-    for my $String (@Params) {
-        next STRING if !$String;
-        my ( $Key, $Value ) = split /=/, $String;
-
-        if ( $Key eq 'CustomerID' ) {
-            $Key = "CustomerIDRaw";
-        }
-
-        # push ARRAYREF attributes directly in an ARRAYREF
-        if (
-            $Key
-            =~ /^(StateType|StateTypeIDs|Queues|QueueIDs|Types|TypeIDs|States|StateIDs|Priorities|PriorityIDs|Services|ServiceIDs|SLAs|SLAIDs|Locks|LockIDs|OwnerIDs|ResponsibleIDs|WatchUserIDs|ArchiveFlags|CreatedUserIDs|CreatedTypes|CreatedTypeIDs|CreatedPriorities|CreatedPriorityIDs|CreatedStates|CreatedStateIDs|CreatedQueues|CreatedQueueIDs)$/
-            )
-        {
-            if ( $Value =~ m{,}smx ) {
-                push @{ $TicketSearch{$Key} }, split( /,/, $Value );
-            }
-            else {
-                push @{ $TicketSearch{$Key} }, $Value;
-            }
-        }
-
-        # check if parameter is a dynamic field and capture dynamic field name (with DynamicField_)
-        # in $1 and the Operator in $2
-        # possible Dynamic Fields options include:
-        #   DynamicField_NameX_Equals=123;
-        #   DynamicField_NameX_Like=value*;
-        #   DynamicField_NameX_GreaterThan=2001-01-01 01:01:01;
-        #   DynamicField_NameX_GreaterThanEquals=2001-01-01 01:01:01;
-        #   DynamicField_NameX_SmallerThan=2002-02-02 02:02:02;
-        #   DynamicField_NameX_SmallerThanEquals=2002-02-02 02:02:02;
-        elsif ( $Key =~ m{\A (DynamicField_.+?) _ (.+?) \z}sxm ) {
-
-            # prevent adding ProcessManagement search parameters (for ProcessWidget)
-            if ( $Self->{Config}->{IsProcessWidget} ) {
-                next STRING if $2 eq $Self->{ProcessManagementProcessID};
-                next STRING if $2 eq $Self->{ProcessManagementActivityID};
-            }
-
-            push @{ $DynamicFieldsParameters{$1}->{$2} }, $Value;
-        }
-
-        elsif ( !defined $TicketSearch{$Key} ) {
-
-            # change sort by, if needed
-            if (
-                $Key eq 'SortBy'
-                && $Self->{SortBy}
-                && $Self->{ValidSortableColumns}->{ $Self->{SortBy} }
-                )
-            {
-                $Value = $Self->{SortBy};
-            }
-            elsif ( $Key eq 'SortBy' && !$Self->{ValidSortableColumns}->{$Value} ) {
-                $Value = 'Age';
-            }
-            $TicketSearch{$Key} = $Value;
-        }
-        elsif ( !ref $TicketSearch{$Key} ) {
-            my $ValueTmp = $TicketSearch{$Key};
-            $TicketSearch{$Key} = [$ValueTmp];
-            push @{ $TicketSearch{$Key} }, $Value;
-        }
-        else {
-            push @{ $TicketSearch{$Key} }, $Value;
-        }
+    %TicketSearch = (
+        %Profile,
+        ContentSearchPrefix => '*',
+        ContentSearchSuffix => '*',
+        FullTextIndex       => 1,
+    );
+    if ( $ConfigObject->Get("Ticket::Frontend::AgentTicketSearch")->{ExtendedSearchCondition} ) {
+        $TicketSearch{ConditionInline} = 1;
     }
+
     %TicketSearch = (
         %TicketSearch,
         %DynamicFieldsParameters,
