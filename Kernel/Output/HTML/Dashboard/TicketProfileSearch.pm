@@ -897,97 +897,6 @@ sub Run {
 
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
 
-    # show only AssignedToCustomerUser if we have the filter
-    if ( $TicketSearchSummary{AssignedToCustomerUser} ) {
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericFilterAssignedToCustomerUser',
-            Data => {
-                %Param,
-                %{ $Self->{Config} },
-                Name => $Self->{Name},
-                %{$Summary},
-            },
-        );
-    }
-
-    # show only locked if we have the filter
-    if ( $TicketSearchSummary{AccessibleForCustomerUser} ) {
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericFilterAccessibleForCustomerUser',
-            Data => {
-                %Param,
-                %{ $Self->{Config} },
-                Name => $Self->{Name},
-                %{$Summary},
-            },
-        );
-    }
-
-    # show also watcher if feature is enabled and there is a watcher filter
-    if ( $ConfigObject->Get('Ticket::Watcher') && $TicketSearchSummary{Watcher} ) {
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericFilterWatcher',
-            Data => {
-                %Param,
-                %{ $Self->{Config} },
-                Name => $Self->{Name},
-                %{$Summary},
-            },
-        );
-    }
-
-    # show also responsible if feature is enabled and there is a responsible filter
-    if ( $ConfigObject->Get('Ticket::Responsible') && $TicketSearchSummary{Responsible} ) {
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericFilterResponsible',
-            Data => {
-                %Param,
-                %{ $Self->{Config} },
-                Name => $Self->{Name},
-                %{$Summary},
-            },
-        );
-    }
-
-    # show only my queues if we have the filter
-    if ( $TicketSearchSummary{MyQueues} ) {
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericFilterMyQueues',
-            Data => {
-                %Param,
-                %{ $Self->{Config} },
-                Name => $Self->{Name},
-                %{$Summary},
-            },
-        );
-    }
-
-    # show only my services if we have the filter
-    if ( $TicketSearchSummary{MyServices} ) {
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericFilterMyServices',
-            Data => {
-                %Param,
-                %{ $Self->{Config} },
-                Name => $Self->{Name},
-                %{$Summary},
-            },
-        );
-    }
-
-    # show only locked if we have the filter
-    if ( $TicketSearchSummary{Locked} ) {
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericFilterLocked',
-            Data => {
-                %Param,
-                %{ $Self->{Config} },
-                Name => $Self->{Name},
-                %{$Summary},
-            },
-        );
-    }
-
     # add page nav bar
     my $Total = $Summary->{ $Self->{Filter} } || 0;
 
@@ -2458,30 +2367,8 @@ sub _SearchParamsGet {
     my %LockName2ID = reverse %LockList;
 
     my %TicketSearchSummary = (
-        Locked => {
-            OwnerIDs => $TicketSearch{OwnerIDs} // [ $Self->{UserID}, ],
-            LockIDs  => [ $LockName2ID{lock}, $LockName2ID{tmp_lock} ],
-        },
-        Watcher => {
-            WatchUserIDs => [ $Self->{UserID}, ],
-            LockIDs      => $TicketSearch{LockIDs} // undef,
-        },
-        Responsible => {
-            ResponsibleIDs => $TicketSearch{ResponsibleIDs} // [ $Self->{UserID}, ],
-            LockIDs        => $TicketSearch{LockIDs}        // undef,
-        },
-        MyQueues => {
-            QueueIDs => \@MyQueues,
-            LockIDs  => $TicketSearch{LockIDs} // undef,
-        },
-        MyServices => {
-            QueueIDs   => \@ViewableQueueIDs,
-            ServiceIDs => \@MyServiceIDs,
-            LockIDs    => $TicketSearch{LockIDs} // undef,
-        },
         All => {
             OwnerIDs => $TicketSearch{OwnerIDs} // undef,
-            LockIDs  => $TicketSearch{LockIDs}  // undef,
         },
     );
 
