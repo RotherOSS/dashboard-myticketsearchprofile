@@ -586,6 +586,10 @@ use Data::Dumper;
 sub Run {
     my ( $Self, %Param ) = @_;
 
+    #my %DefParam;
+    #for (keys %Param) {next if !defined $Param{$_}; $DefParam{$_} = $Param{$_}}
+    #print STDERR "TicketSearch %DefParam: ".Dumper(\%DefParam);
+
     my %SearchParams        = $Self->_SearchParamsGet(%Param);
     my @Columns             = @{ $SearchParams{Columns} };
     my %TicketSearch        = %{ $SearchParams{TicketSearch} };
@@ -599,7 +603,12 @@ sub Run {
         );
     }
 
-    my $CacheKey     = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $Self->{PrefSearchTemplate};
+    my $UserObject  = $Kernel::OM->Get('Kernel::System::User');
+    my %Preferences = $UserObject->GetPreferences(
+        UserID => $Self->{UserID},
+    );
+
+    my $CacheKey     = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $Preferences{ $Self->{PrefSearchTemplate} };
     my $CacheColumns = join(
         ',',
         map { $_ . '=>' . $Self->{GetColumnFilterSelect}->{$_} } sort keys %{ $Self->{GetColumnFilterSelect} }
@@ -880,10 +889,6 @@ sub Run {
     }
 
     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
-
-    my %Preferences = $Kernel::OM->Get('Kernel::System::User')->GetPreferences(
-        UserID => $Self->{UserID},
-    );
 
     # get ticket counts
     # if the search template is invalid (null or deleted) count no tickets
@@ -1653,7 +1658,6 @@ sub Run {
 
             # get needed objects
             my $BackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
-            my $UserObject    = $Kernel::OM->Get('Kernel::System::User');
 
             # show all needed columns
             COLUMN:
@@ -2194,6 +2198,7 @@ sub _SearchParamsGet {
         UserLogin => $Self->{UserLogin},
     );
 
+    #print STDERR Dumper \%Profile;
     if ( !%Profile ) {
         $Profile{InvalidSearchTemplate} = 1;
     }
