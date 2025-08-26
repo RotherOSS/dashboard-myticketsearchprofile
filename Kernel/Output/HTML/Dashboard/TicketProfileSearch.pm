@@ -581,6 +581,8 @@ sub FilterContent {
 
 }
 
+use Data::Dumper;
+
 sub Run {
     my ( $Self, %Param ) = @_;
 
@@ -883,7 +885,12 @@ sub Run {
         UserID => $Self->{UserID},
     );
 
-    # get filter ticket counts
+    # get ticket counts
+    # if the search template is invalid (null or deleted) count no tickets
+    if ( $TicketSearch{InvalidSearchTemplate} ) {
+        $Summary->{All} = 0;
+    }
+
     $LayoutObject->Block(
         Name => 'ContentLargeTicketGenericFilter',
         Data => {
@@ -1569,330 +1576,333 @@ sub Run {
 
     # show tickets
     my $Count = 0;
-    TICKETID:
-    for my $TicketID ( @{$TicketIDs} ) {
-        $Count++;
-        next TICKETID if $Count < $Self->{StartHit};
-        my %Ticket = $TicketObject->TicketGet(
-            TicketID      => $TicketID,
-            UserID        => $Self->{UserID},
-            DynamicFields => 0,
-            Silent        => 1
-        );
 
-        next TICKETID if !%Ticket;
-
-        # set a default title if ticket has no title
-        if ( !$Ticket{Title} ) {
-            $Ticket{Title} = $LayoutObject->{LanguageObject}->Translate(
-                'This ticket has no title or subject'
+    # if the search template is invalid (null or deleted) list no tickets
+    if ( !$TicketSearch{InvalidSearchTemplate} ) {
+        
+        TICKETID:
+        for my $TicketID ( @{$TicketIDs} ) {
+            $Count++;
+            next TICKETID if $Count < $Self->{StartHit};
+            my %Ticket = $TicketObject->TicketGet(
+                TicketID      => $TicketID,
+                UserID        => $Self->{UserID},
+                DynamicFields => 0,
+                Silent        => 1
             );
-        }
 
-        my $WholeTitle = $Ticket{Title} || '';
-        $Ticket{Title} = $TicketObject->TicketSubjectClean(
-            TicketNumber => $Ticket{TicketNumber},
-            Subject      => $Ticket{Title},
-        );
+            next TICKETID if !%Ticket;
 
-        # create human age
-        if ( $Self->{Config}->{Time} ne 'Age' ) {
-            $Ticket{Time} = $LayoutObject->CustomerAge(
-                Age                => $Ticket{ $Self->{Config}->{Time} },
-                TimeShowAlwaysLong => 1,
-                Space              => ' ',
-            );
-        }
-        else {
-            $Ticket{Time} = $LayoutObject->CustomerAge(
-                Age   => $Ticket{ $Self->{Config}->{Time} },
-                Space => ' ',
-            );
-        }
-
-        # show ticket
-        $LayoutObject->Block(
-            Name => 'ContentLargeTicketGenericRow',
-            Data => \%Ticket,
-        );
-
-        # show ticket flags
-        my @TicketMetaItems = $LayoutObject->TicketMetaItems(
-            Ticket => \%Ticket,
-        );
-        for my $Item (@TicketMetaItems) {
-
-            $LayoutObject->Block(
-                Name => 'GeneralOverviewRow',
-            );
-            $LayoutObject->Block(
-                Name => 'ContentLargeTicketGenericRowMeta',
-                Data => {},
-            );
-            if ($Item) {
-                $LayoutObject->Block(
-                    Name => 'ContentLargeTicketGenericRowMetaImage',
-                    Data => $Item,
+            # set a default title if ticket has no title
+            if ( !$Ticket{Title} ) {
+                $Ticket{Title} = $LayoutObject->{LanguageObject}->Translate(
+                    'This ticket has no title or subject'
                 );
             }
-        }
 
-        # save column content
-        my $DataValue;
+            my $WholeTitle = $Ticket{Title} || '';
+            $Ticket{Title} = $TicketObject->TicketSubjectClean(
+                TicketNumber => $Ticket{TicketNumber},
+                Subject      => $Ticket{Title},
+            );
 
-        # get needed objects
-        my $BackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
-        my $UserObject    = $Kernel::OM->Get('Kernel::System::User');
-
-        # show all needed columns
-        COLUMN:
-        for my $Column (@Columns) {
-
-            # skip CustomerID if Customer Information Center
-            if ( $Self->{Action} eq 'AgentCustomerInformationCenter' && $Column eq 'CustomerID' ) {
-                next COLUMN;
+            # create human age
+            if ( $Self->{Config}->{Time} ne 'Age' ) {
+                $Ticket{Time} = $LayoutObject->CustomerAge(
+                    Age                => $Ticket{ $Self->{Config}->{Time} },
+                    TimeShowAlwaysLong => 1,
+                    Space              => ' ',
+                );
+            }
+            else {
+                $Ticket{Time} = $LayoutObject->CustomerAge(
+                    Age   => $Ticket{ $Self->{Config}->{Time} },
+                    Space => ' ',
+                );
             }
 
-            if ( $Column !~ m{\A DynamicField_}xms ) {
+            # show ticket
+            $LayoutObject->Block(
+                Name => 'ContentLargeTicketGenericRow',
+                Data => \%Ticket,
+            );
+
+            # show ticket flags
+            my @TicketMetaItems = $LayoutObject->TicketMetaItems(
+                Ticket => \%Ticket,
+            );
+            for my $Item (@TicketMetaItems) {
 
                 $LayoutObject->Block(
                     Name => 'GeneralOverviewRow',
                 );
                 $LayoutObject->Block(
-                    Name => 'ContentLargeTicketGenericTicketColumn',
+                    Name => 'ContentLargeTicketGenericRowMeta',
                     Data => {},
                 );
-
-                my $BlockType = '';
-                my $CSSClass  = '';
-
-                if ( $Column eq 'TicketNumber' ) {
+                if ($Item) {
                     $LayoutObject->Block(
-                        Name => 'ContentLargeTicketGenericTicketNumber',
-                        Data => {
-                            %Ticket,
-                            Title => $Ticket{Title},
-                        },
-                    );
-                    next COLUMN;
-                }
-                elsif ( $Column eq 'EscalationTime' ) {
-                    my %EscalationData;
-                    $EscalationData{EscalationTime}            = $Ticket{EscalationTime};
-                    $EscalationData{EscalationDestinationDate} = $Ticket{EscalationDestinationDate};
-
-                    $EscalationData{EscalationTimeHuman} = $LayoutObject->CustomerAge(
-                        Age                => $EscalationData{EscalationTime},
-                        TimeShowAlwaysLong => 1,
-                        Space              => ' ',
-                    ) || '-';
-                    $EscalationData{EscalationTimeWorkingTime} = $LayoutObject->CustomerAge(
-                        Age                => $EscalationData{EscalationTimeWorkingTime},
-                        TimeShowAlwaysLong => 1,
-                        Space              => ' ',
-                    );
-                    if ( defined $Ticket{EscalationTime} && $Ticket{EscalationTime} < 60 * 60 * 1 ) {
-                        $EscalationData{EscalationClass} = 'Warning';
-                    }
-                    $LayoutObject->Block(
-                        Name => 'ContentLargeTicketGenericEscalationTime',
-                        Data => {%EscalationData},
-                    );
-                    next COLUMN;
-                }
-                elsif ( $Column eq 'Age' ) {
-                    $DataValue = $LayoutObject->CustomerAge(
-                        Age   => $Ticket{Age},
-                        Space => ' ',
+                        Name => 'ContentLargeTicketGenericRowMetaImage',
+                        Data => $Item,
                     );
                 }
-                elsif ( $Column eq 'EscalationSolutionTime' ) {
-                    $BlockType = 'Escalation';
-                    $DataValue = $LayoutObject->CustomerAge(
-                        Age                => $Ticket{SolutionTime} || 0,
-                        TimeShowAlwaysLong => 1,
-                        Space              => ' ',
-                    );
-                    if ( defined $Ticket{SolutionTime} && $Ticket{SolutionTime} < 60 * 60 * 1 ) {
-                        $CSSClass = 'Warning';
-                    }
-                }
-                elsif ( $Column eq 'EscalationResponseTime' ) {
-                    $BlockType = 'Escalation';
-                    $DataValue = $LayoutObject->CustomerAge(
-                        Age                => $Ticket{FirstResponseTime} || 0,
-                        TimeShowAlwaysLong => 1,
-                        Space              => ' ',
-                    );
-                    if (
-                        defined $Ticket{FirstResponseTime}
-                        && $Ticket{FirstResponseTime} < 60 * 60 * 1
-                        )
-                    {
-                        $CSSClass = 'Warning';
-                    }
-                }
-                elsif ( $Column eq 'EscalationUpdateTime' ) {
-                    $BlockType = 'Escalation';
-                    $DataValue = $LayoutObject->CustomerAge(
-                        Age                => $Ticket{UpdateTime} || 0,
-                        TimeShowAlwaysLong => 1,
-                        Space              => ' ',
-                    );
-                    if ( defined $Ticket{UpdateTime} && $Ticket{UpdateTime} < 60 * 60 * 1 ) {
-                        $CSSClass = 'Warning';
-                    }
-                }
-                elsif ( $Column eq 'PendingTime' ) {
-                    $BlockType = 'Escalation';
-                    $DataValue = $LayoutObject->CustomerAge(
-                        Age   => $Ticket{'UntilTime'},
-                        Space => ' ',
-                    );
-                    if ( defined $Ticket{UntilTime} && $Ticket{UntilTime} < -1 ) {
-                        $CSSClass = 'Warning';
-                    }
-                }
-                elsif ( $Column eq 'Owner' ) {
-
-                    # get owner info
-                    my %OwnerInfo = $UserObject->GetUserData(
-                        UserID => $Ticket{OwnerID},
-                    );
-                    $DataValue = $OwnerInfo{'UserFullname'};
-                }
-                elsif ( $Column eq 'Responsible' ) {
-
-                    # get responsible info
-                    my %ResponsibleInfo = $UserObject->GetUserData(
-                        UserID => $Ticket{ResponsibleID},
-                    );
-                    $DataValue = $ResponsibleInfo{'UserFullname'};
-                }
-                elsif (
-                    $Column eq 'State'
-                    || $Column eq 'Lock'
-                    || $Column eq 'Priority'
-                    )
-                {
-                    $BlockType = 'Translatable';
-                    $DataValue = $Ticket{$Column};
-                }
-                elsif ( $Column eq 'Created' || $Column eq 'Changed' ) {
-                    $BlockType = 'Time';
-                    $DataValue = $Ticket{$Column};
-                }
-                elsif ( $Column eq 'CustomerName' ) {
-
-                    # get customer name
-                    my $CustomerName;
-                    if ( $Ticket{CustomerUserID} ) {
-                        $CustomerName = $Kernel::OM->Get('Kernel::System::CustomerUser')->CustomerName(
-                            UserLogin => $Ticket{CustomerUserID},
-                        );
-                    }
-                    $DataValue = $CustomerName;
-                }
-                elsif ( $Column eq 'CustomerCompanyName' ) {
-                    my %CustomerCompanyData;
-                    if ( $Ticket{CustomerID} ) {
-                        %CustomerCompanyData = $Kernel::OM->Get('Kernel::System::CustomerCompany')->CustomerCompanyGet(
-                            CustomerID => $Ticket{CustomerID},
-                        );
-                    }
-                    $DataValue = $CustomerCompanyData{CustomerCompanyName};
-                }
-                else {
-                    $DataValue = $Ticket{$Column};
-                }
-
-                if ( $Column eq 'Title' ) {
-                    $LayoutObject->Block(
-                        Name => "ContentLargeTicketTitle",
-                        Data => {
-                            Title      => "$DataValue " || '',
-                            WholeTitle => $WholeTitle,
-                            Class      => $CSSClass || '',
-                        },
-                    );
-
-                }
-                else {
-                    $LayoutObject->Block(
-                        Name => "ContentLargeTicketGenericColumn$BlockType",
-                        Data => {
-                            GenericValue => $DataValue || '-',
-                            Class        => $CSSClass  || '',
-                        },
-                    );
-                }
-
             }
 
-            # Dynamic fields
-            else {
-                my $DynamicFieldConfig;
-                my $DFColumn = $Column;
-                $DFColumn =~ s/DynamicField_//g;
-                DYNAMICFIELD:
-                for my $DFConfig ( @{ $Self->{DynamicField} } ) {
-                    next DYNAMICFIELD if !IsHashRefWithData($DFConfig);
-                    next DYNAMICFIELD if $DFConfig->{Name} ne $DFColumn;
+            # save column content
+            my $DataValue;
 
-                    $DynamicFieldConfig = $DFConfig;
-                    last DYNAMICFIELD;
+            # get needed objects
+            my $BackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
+            my $UserObject    = $Kernel::OM->Get('Kernel::System::User');
+
+            # show all needed columns
+            COLUMN:
+            for my $Column (@Columns) {
+
+                # skip CustomerID if Customer Information Center
+                if ( $Self->{Action} eq 'AgentCustomerInformationCenter' && $Column eq 'CustomerID' ) {
+                    next COLUMN;
                 }
-                next COLUMN if !IsHashRefWithData($DynamicFieldConfig);
 
-                # get field value
-                my $Value = $BackendObject->ValueGet(
-                    DynamicFieldConfig => $DynamicFieldConfig,
-                    ObjectID           => $TicketID,
-                );
+                if ( $Column !~ m{\A DynamicField_}xms ) {
 
-                my $ValueStrg = $BackendObject->DisplayValueRender(
-                    DynamicFieldConfig => $DynamicFieldConfig,
-                    Value              => $Value,
-                    ValueMaxChars      => 20,
-                    LayoutObject       => $LayoutObject,
-                );
-
-                $LayoutObject->Block(
-                    Name => 'ContentLargeTicketGenericDynamicField',
-                    Data => {
-                        Value => $ValueStrg->{Value},
-                        Title => $ValueStrg->{Title},
-                    },
-                );
-
-                if ( $ValueStrg->{Link} ) {
                     $LayoutObject->Block(
-                        Name => 'ContentLargeTicketGenericDynamicFieldLink',
-                        Data => {
-                            Value                       => $ValueStrg->{Value},
-                            Title                       => $ValueStrg->{Title},
-                            Link                        => $ValueStrg->{Link},
-                            $DynamicFieldConfig->{Name} => $ValueStrg->{Title},
-                        },
+                        Name => 'GeneralOverviewRow',
                     );
-                }
-                else {
                     $LayoutObject->Block(
-                        Name => 'ContentLargeTicketGenericDynamicFieldPlain',
+                        Name => 'ContentLargeTicketGenericTicketColumn',
+                        Data => {},
+                    );
+
+                    my $BlockType = '';
+                    my $CSSClass  = '';
+
+                    if ( $Column eq 'TicketNumber' ) {
+                        $LayoutObject->Block(
+                            Name => 'ContentLargeTicketGenericTicketNumber',
+                            Data => {
+                                %Ticket,
+                                Title => $Ticket{Title},
+                            },
+                        );
+                        next COLUMN;
+                    }
+                    elsif ( $Column eq 'EscalationTime' ) {
+                        my %EscalationData;
+                        $EscalationData{EscalationTime}            = $Ticket{EscalationTime};
+                        $EscalationData{EscalationDestinationDate} = $Ticket{EscalationDestinationDate};
+
+                        $EscalationData{EscalationTimeHuman} = $LayoutObject->CustomerAge(
+                            Age                => $EscalationData{EscalationTime},
+                            TimeShowAlwaysLong => 1,
+                            Space              => ' ',
+                        ) || '-';
+                        $EscalationData{EscalationTimeWorkingTime} = $LayoutObject->CustomerAge(
+                            Age                => $EscalationData{EscalationTimeWorkingTime},
+                            TimeShowAlwaysLong => 1,
+                            Space              => ' ',
+                        );
+                        if ( defined $Ticket{EscalationTime} && $Ticket{EscalationTime} < 60 * 60 * 1 ) {
+                            $EscalationData{EscalationClass} = 'Warning';
+                        }
+                        $LayoutObject->Block(
+                            Name => 'ContentLargeTicketGenericEscalationTime',
+                            Data => {%EscalationData},
+                        );
+                        next COLUMN;
+                    }
+                    elsif ( $Column eq 'Age' ) {
+                        $DataValue = $LayoutObject->CustomerAge(
+                            Age   => $Ticket{Age},
+                            Space => ' ',
+                        );
+                    }
+                    elsif ( $Column eq 'EscalationSolutionTime' ) {
+                        $BlockType = 'Escalation';
+                        $DataValue = $LayoutObject->CustomerAge(
+                            Age                => $Ticket{SolutionTime} || 0,
+                            TimeShowAlwaysLong => 1,
+                            Space              => ' ',
+                        );
+                        if ( defined $Ticket{SolutionTime} && $Ticket{SolutionTime} < 60 * 60 * 1 ) {
+                            $CSSClass = 'Warning';
+                        }
+                    }
+                    elsif ( $Column eq 'EscalationResponseTime' ) {
+                        $BlockType = 'Escalation';
+                        $DataValue = $LayoutObject->CustomerAge(
+                            Age                => $Ticket{FirstResponseTime} || 0,
+                            TimeShowAlwaysLong => 1,
+                            Space              => ' ',
+                        );
+                        if (
+                            defined $Ticket{FirstResponseTime}
+                            && $Ticket{FirstResponseTime} < 60 * 60 * 1
+                            )
+                        {
+                            $CSSClass = 'Warning';
+                        }
+                    }
+                    elsif ( $Column eq 'EscalationUpdateTime' ) {
+                        $BlockType = 'Escalation';
+                        $DataValue = $LayoutObject->CustomerAge(
+                            Age                => $Ticket{UpdateTime} || 0,
+                            TimeShowAlwaysLong => 1,
+                            Space              => ' ',
+                        );
+                        if ( defined $Ticket{UpdateTime} && $Ticket{UpdateTime} < 60 * 60 * 1 ) {
+                            $CSSClass = 'Warning';
+                        }
+                    }
+                    elsif ( $Column eq 'PendingTime' ) {
+                        $BlockType = 'Escalation';
+                        $DataValue = $LayoutObject->CustomerAge(
+                            Age   => $Ticket{'UntilTime'},
+                            Space => ' ',
+                        );
+                        if ( defined $Ticket{UntilTime} && $Ticket{UntilTime} < -1 ) {
+                            $CSSClass = 'Warning';
+                        }
+                    }
+                    elsif ( $Column eq 'Owner' ) {
+
+                        # get owner info
+                        my %OwnerInfo = $UserObject->GetUserData(
+                            UserID => $Ticket{OwnerID},
+                        );
+                        $DataValue = $OwnerInfo{'UserFullname'};
+                    }
+                    elsif ( $Column eq 'Responsible' ) {
+
+                        # get responsible info
+                        my %ResponsibleInfo = $UserObject->GetUserData(
+                            UserID => $Ticket{ResponsibleID},
+                        );
+                        $DataValue = $ResponsibleInfo{'UserFullname'};
+                    }
+                    elsif (
+                        $Column eq 'State'
+                        || $Column eq 'Lock'
+                        || $Column eq 'Priority'
+                        )
+                    {
+                        $BlockType = 'Translatable';
+                        $DataValue = $Ticket{$Column};
+                    }
+                    elsif ( $Column eq 'Created' || $Column eq 'Changed' ) {
+                        $BlockType = 'Time';
+                        $DataValue = $Ticket{$Column};
+                    }
+                    elsif ( $Column eq 'CustomerName' ) {
+
+                        # get customer name
+                        my $CustomerName;
+                        if ( $Ticket{CustomerUserID} ) {
+                            $CustomerName = $Kernel::OM->Get('Kernel::System::CustomerUser')->CustomerName(
+                                UserLogin => $Ticket{CustomerUserID},
+                            );
+                        }
+                        $DataValue = $CustomerName;
+                    }
+                    elsif ( $Column eq 'CustomerCompanyName' ) {
+                        my %CustomerCompanyData;
+                        if ( $Ticket{CustomerID} ) {
+                            %CustomerCompanyData = $Kernel::OM->Get('Kernel::System::CustomerCompany')->CustomerCompanyGet(
+                                CustomerID => $Ticket{CustomerID},
+                            );
+                        }
+                        $DataValue = $CustomerCompanyData{CustomerCompanyName};
+                    }
+                    else {
+                        $DataValue = $Ticket{$Column};
+                    }
+
+                    if ( $Column eq 'Title' ) {
+                        $LayoutObject->Block(
+                            Name => "ContentLargeTicketTitle",
+                            Data => {
+                                Title      => "$DataValue " || '',
+                                WholeTitle => $WholeTitle,
+                                Class      => $CSSClass || '',
+                            },
+                        );
+
+                    }
+                    else {
+                        $LayoutObject->Block(
+                            Name => "ContentLargeTicketGenericColumn$BlockType",
+                            Data => {
+                                GenericValue => $DataValue || '-',
+                                Class        => $CSSClass  || '',
+                            },
+                        );
+                    }
+
+                }
+
+                # Dynamic fields
+                else {
+                    my $DynamicFieldConfig;
+                    my $DFColumn = $Column;
+                    $DFColumn =~ s/DynamicField_//g;
+                    DYNAMICFIELD:
+                    for my $DFConfig ( @{ $Self->{DynamicField} } ) {
+                        next DYNAMICFIELD if !IsHashRefWithData($DFConfig);
+                        next DYNAMICFIELD if $DFConfig->{Name} ne $DFColumn;
+
+                        $DynamicFieldConfig = $DFConfig;
+                        last DYNAMICFIELD;
+                    }
+                    next COLUMN if !IsHashRefWithData($DynamicFieldConfig);
+
+                    # get field value
+                    my $Value = $BackendObject->ValueGet(
+                        DynamicFieldConfig => $DynamicFieldConfig,
+                        ObjectID           => $TicketID,
+                    );
+
+                    my $ValueStrg = $BackendObject->DisplayValueRender(
+                        DynamicFieldConfig => $DynamicFieldConfig,
+                        Value              => $Value,
+                        ValueMaxChars      => 20,
+                        LayoutObject       => $LayoutObject,
+                    );
+
+                    $LayoutObject->Block(
+                        Name => 'ContentLargeTicketGenericDynamicField',
                         Data => {
                             Value => $ValueStrg->{Value},
                             Title => $ValueStrg->{Title},
                         },
                     );
+
+                    if ( $ValueStrg->{Link} ) {
+                        $LayoutObject->Block(
+                            Name => 'ContentLargeTicketGenericDynamicFieldLink',
+                            Data => {
+                                Value                       => $ValueStrg->{Value},
+                                Title                       => $ValueStrg->{Title},
+                                Link                        => $ValueStrg->{Link},
+                                $DynamicFieldConfig->{Name} => $ValueStrg->{Title},
+                            },
+                        );
+                    }
+                    else {
+                        $LayoutObject->Block(
+                            Name => 'ContentLargeTicketGenericDynamicFieldPlain',
+                            Data => {
+                                Value => $ValueStrg->{Value},
+                                Title => $ValueStrg->{Title},
+                            },
+                        );
+                    }
                 }
             }
-
         }
-
     }
 
-    # show "none" if no ticket is available
-    if ( !$TicketIDs || !@{$TicketIDs} ) {
+    # show "none" if no ticket is available or if the search template is invalid (null or deleted)
+    if ( $TicketSearch{InvalidSearchTemplate} || !$TicketIDs || !@{$TicketIDs} ) {
         $LayoutObject->Block(
             Name => 'ContentLargeTicketGenericNone',
             Data => {},
@@ -2183,6 +2193,10 @@ sub _SearchParamsGet {
         Name      => $Preferences{ $Self->{PrefSearchTemplate} },
         UserLogin => $Self->{UserLogin},
     );
+
+    if ( !%Profile ) {
+        $Profile{InvalidSearchTemplate} = 1;
+    }
 
     # get column names from Preferences
     my $PreferencesColumn = $Kernel::OM->Get('Kernel::System::JSON')->Decode(
