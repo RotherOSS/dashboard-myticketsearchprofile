@@ -602,7 +602,7 @@ sub Run {
         UserID => $Self->{UserID},
     );
 
-    my $CacheKey     = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $Preferences{ $Self->{PrefSearchTemplate} };
+    my $CacheKey = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $Preferences{ $Self->{PrefSearchTemplate} };
     my $CacheColumns = join(
         ',',
         map { $_ . '=>' . $Self->{GetColumnFilterSelect}->{$_} } sort keys %{ $Self->{GetColumnFilterSelect} }
@@ -1495,7 +1495,7 @@ sub Run {
 
     # if the search template is invalid (null or deleted) list no tickets
     if ( !$TicketSearch{InvalidSearchTemplate} ) {
-        
+
         TICKETID:
         for my $TicketID ( @{$TicketIDs} ) {
             $Count++;
@@ -2250,7 +2250,7 @@ sub _SearchParamsGet {
     %TicketSearch = (
         %TicketSearch,
         %DynamicFieldsParameters,
-        UserID     => $Self->{UserID},
+        UserID => $Self->{UserID},
     );
 
     # CustomerInformationCenter shows data per CustomerID
@@ -2261,7 +2261,7 @@ sub _SearchParamsGet {
     return (
         Columns             => \@Columns,
         TicketSearch        => \%TicketSearch,
-        TicketSearchSummary => \%TicketSearchSummary,
+        TicketSearchSummary => {},
     );
 }
 
