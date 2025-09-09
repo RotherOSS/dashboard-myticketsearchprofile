@@ -581,14 +581,8 @@ sub FilterContent {
 
 }
 
-use Data::Dumper;
-
 sub Run {
     my ( $Self, %Param ) = @_;
-
-    #my %DefParam;
-    #for (keys %Param) {next if !defined $Param{$_}; $DefParam{$_} = $Param{$_}}
-    #print STDERR "TicketSearch %DefParam: ".Dumper(\%DefParam);
 
     my %SearchParams        = $Self->_SearchParamsGet(%Param);
     my @Columns             = @{ $SearchParams{Columns} };
@@ -717,55 +711,13 @@ sub Run {
             # Copy original column filter.
             my %ColumnFilter = %{ $Self->{ColumnFilter} || {} };
 
-            # Change filter name accordingly.
-            my $Filter;
-            if ( $Self->{Filter} eq 'MyQueues' ) {
-                $Filter = 'QueueIDs';
-            }
-            elsif ( $Self->{Filter} eq 'MyServices' ) {
-                $Filter = 'ServiceIDs';
-
-                if ( $ColumnFilter{QueueIDs} ) {
-                    $TicketSearchSummary{ $Self->{Filter} }->{QueueIDs} = $ColumnFilter{QueueIDs};
-                }
-            }
-            elsif ( $Self->{Filter} eq 'Responsible' ) {
-                $Filter = 'ResponsibleIDs';
-            }
-            elsif ( $Self->{Filter} eq 'Locked' ) {
-                $Filter = 'LockIDs';
-            }
-
-            # Handle cases for filter columns to preserve filter value in other tab actions.
-            if ( $ColumnFilter{LockIDs} ) {
-                $TicketSearchSummary{ $Self->{Filter} }->{LockIDs} = $ColumnFilter{LockIDs};
-            }
-            elsif ( $ColumnFilter{OwnerIDs} ) {
-                $TicketSearchSummary{ $Self->{Filter} }->{OwnerIDs} = $ColumnFilter{OwnerIDs};
-            }
-
-            # Filter is used and is not in user prefered values, show no results.
-            # See bug#12808 ( https://bugs.otrs.org/show_bug.cgi?id=12808 ).
-            if (
-                $Filter
-                && IsArrayRefWithData( $TicketSearchSummary{ $Self->{Filter} }->{$Filter} )
-                && IsArrayRefWithData( $ColumnFilter{$Filter} )
-                && !grep { $ColumnFilter{$Filter}->[0] == $_ } @{ $TicketSearchSummary{ $Self->{Filter} }->{$Filter} }
-                )
-            {
-                @TicketIDsArray = ();
-            }
-
-            # Execute search.
-            else {
-                @TicketIDsArray = $TicketObject->TicketSearch(
-                    Result => 'ARRAY',
-                    %TicketSearch,
-                    %{ $TicketSearchSummary{ $Self->{Filter} } },
-                    %ColumnFilter,
-                    Limit => $Self->{PageShown} + $Self->{StartHit} - 1,
-                );
-            }
+            @TicketIDsArray = $TicketObject->TicketSearch(
+                Result => 'ARRAY',
+                %TicketSearch,
+                %{ $TicketSearchSummary{ $Self->{Filter} } },
+                %ColumnFilter,
+                Limit => $Self->{PageShown} + $Self->{StartHit} - 1,
+            );
         }
         $TicketIDs = \@TicketIDsArray;
     }
@@ -815,53 +767,12 @@ sub Run {
             if ( !$Self->{Config}->{IsProcessWidget} || IsArrayRefWithData( $Self->{ProcessList} ) ) {
 
                 # Change filter name accordingly.
-                my $Filter;
-                if ( $Type eq 'MyQueues' ) {
-                    $Filter = 'QueueIDs';
-                }
-                elsif ( $Type eq 'MyServices' ) {
-                    $Filter = 'ServiceIDs';
-
-                    if ( $ColumnFilter{QueueIDs} ) {
-                        $TicketSearchSummary{$Type}->{QueueIDs} = $ColumnFilter{QueueIDs};
-                    }
-                }
-                elsif ( $Type eq 'Responsible' ) {
-                    $Filter = 'ResponsibleIDs';
-                }
-                elsif ( $Type eq 'MyLocks' ) {
-                    $Filter = 'LockIDs';
-                }
-
-                # Handle cases for filter columns to preserve filter value in other tab actions.
-                if ( $ColumnFilter{LockIDs} ) {
-                    $TicketSearchSummary{$Type}->{LockIDs} = $ColumnFilter{LockIDs};
-                }
-                elsif ( $ColumnFilter{OwnerIDs} ) {
-                    $TicketSearchSummary{ $Self->{Filter} }->{OwnerIDs} = $ColumnFilter{OwnerIDs};
-                }
-
-                # Filter is used and is not in user prefered values, show no results.
-                # See bug#12808 ( https://bugs.otrs.org/show_bug.cgi?id=12808 ).
-                if (
-                    $Filter
-                    && IsArrayRefWithData( $TicketSearchSummary{$Type}->{$Filter} )
-                    && IsArrayRefWithData( $ColumnFilter{$Filter} )
-                    && !grep { $ColumnFilter{$Filter}->[0] == $_ } @{ $TicketSearchSummary{$Type}->{$Filter} }
-                    )
-                {
-                    $Summary->{$Type} = 0;
-                }
-
-                # Execute search.
-                else {
-                    $Summary->{$Type} = $TicketObject->TicketSearch(
-                        Result => 'COUNT',
-                        %TicketSearch,
-                        %{ $TicketSearchSummary{$Type} },
-                        %ColumnFilter,
-                    ) || 0;
-                }
+                $Summary->{$Type} = $TicketObject->TicketSearch(
+                    Result => 'COUNT',
+                    %TicketSearch,
+                    %{ $TicketSearchSummary{$Type} },
+                    %ColumnFilter,
+                ) || 0;
             }
         }
     }
@@ -2198,7 +2109,6 @@ sub _SearchParamsGet {
         UserLogin => $Self->{UserLogin},
     );
 
-    #print STDERR Dumper \%Profile;
     if ( !%Profile ) {
         $Profile{InvalidSearchTemplate} = 1;
     }
@@ -2334,97 +2244,18 @@ sub _SearchParamsGet {
         FullTextIndex       => 1,
     );
     if ( $ConfigObject->Get("Ticket::Frontend::AgentTicketSearch")->{ExtendedSearchCondition} ) {
-        $TicketSearch{ConditionInline} = 1;
+        $TicketSearch{ConditionInline} = $ConfigObject->Get("Ticket::Frontend::AgentTicketSearch")->{ExtendedSearchCondition};
     }
 
     %TicketSearch = (
         %TicketSearch,
         %DynamicFieldsParameters,
-        Permission => $Self->{Config}->{Permission} || 'ro',
         UserID     => $Self->{UserID},
     );
 
     # CustomerInformationCenter shows data per CustomerID
     if ( $Param{CustomerID} ) {
         $TicketSearch{CustomerIDRaw} = $Param{CustomerID};
-    }
-
-    # define filter attributes
-    my @MyQueues = $QueueObject->GetAllCustomQueues(
-        UserID => $Self->{UserID},
-    );
-    if ( !@MyQueues ) {
-        @MyQueues = (999_999);
-    }
-
-    # get all queues the agent is allowed to see (for my services)
-    my %ViewableQueues = $QueueObject->GetAllQueues(
-        UserID => $Self->{UserID},
-        Type   => 'ro',
-    );
-    my @ViewableQueueIDs = sort keys %ViewableQueues;
-    if ( !@ViewableQueueIDs ) {
-        @ViewableQueueIDs = (999_999);
-    }
-
-    # get the custom services from agent preferences
-    # set the service ids to an array of non existing service ids (0)
-    my @MyServiceIDs = (0);
-    if ( $Self->{UseTicketService} ) {
-        @MyServiceIDs = $Kernel::OM->Get('Kernel::System::Service')->GetAllCustomServices(
-            UserID => $Self->{UserID},
-        );
-
-        if ( !defined $MyServiceIDs[0] ) {
-            @MyServiceIDs = (0);
-        }
-    }
-
-    my %LockList = $Kernel::OM->Get('Kernel::System::Lock')->LockList(
-        UserID => $Self->{UserID},
-    );
-    my %LockName2ID = reverse %LockList;
-
-    my %TicketSearchSummary = (
-        All => {
-            OwnerIDs => $TicketSearch{OwnerIDs} // undef,
-        },
-    );
-
-    if ( $Self->{Action} eq 'AgentCustomerUserInformationCenter' ) {
-
-        # Add filters for assigend and accessible tickets for the customer user information center as a
-        #   additional filter together with the other filters. One of them must be always active.
-        %TicketSearchSummary = (
-            AssignedToCustomerUser => {
-                CustomerUserLoginRaw => $Param{CustomerUserID} // undef,
-            },
-            AccessibleForCustomerUser => {
-                CustomerUserID => $Param{CustomerUserID} // undef,
-            },
-            %TicketSearchSummary,
-        );
-    }
-
-    if ( defined $TicketSearch{LockIDs} || defined $TicketSearch{Locks} ) {
-        delete $TicketSearchSummary{Locked};
-    }
-
-    if ( defined $TicketSearch{WatchUserIDs} ) {
-        delete $TicketSearchSummary{Watcher};
-    }
-
-    if ( defined $TicketSearch{ResponsibleIDs} ) {
-        delete $TicketSearchSummary{Responsible};
-    }
-
-    if ( defined $TicketSearch{QueueIDs} || defined $TicketSearch{Queues} ) {
-        delete $TicketSearchSummary{MyQueues};
-        delete $TicketSearchSummary{MyServices}->{QueueIDs};
-    }
-
-    if ( !$Self->{UseTicketService} ) {
-        delete $TicketSearchSummary{MyServices};
     }
 
     return (
