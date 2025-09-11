@@ -23,7 +23,7 @@ use Kernel::System::VariableCheck qw(:all);
 use Kernel::Language              qw(Translatable);
 
 our $ObjectManagerDisabled = 1;
-use Data::Dumper;
+
 sub new {
     my ( $Type, %Param ) = @_;
 
@@ -520,7 +520,6 @@ sub FilterContent {
         }
 
         if ( !$Self->{Config}->{IsProcessWidget} || IsArrayRefWithData( $Self->{ProcessList} ) ) {
-            #print STDERR "************** DASHBOARD **************:\n";
             @OriginalViewableTickets = $Kernel::OM->Get('Kernel::System::Ticket')->TicketSearch(
                 %TicketSearch,
                 %{ $TicketSearchSummary{ $Self->{Filter} } },
@@ -711,7 +710,6 @@ sub Run {
 
             # Copy original column filter.
             my %ColumnFilter = %{ $Self->{ColumnFilter} || {} };
-            #print STDERR "************** DASHBOARD **************:\n";
             @TicketIDsArray = $TicketObject->TicketSearch(
                 Result => 'ARRAY',
                 %TicketSearch,
@@ -768,7 +766,6 @@ sub Run {
             if ( !$Self->{Config}->{IsProcessWidget} || IsArrayRefWithData( $Self->{ProcessList} ) ) {
 
                 # Change filter name accordingly.
-                #print STDERR "************** DASHBOARD **************:\n";
                 $Summary->{$Type} = $TicketObject->TicketSearch(
                     Result => 'COUNT',
                     %TicketSearch,
@@ -2114,8 +2111,6 @@ sub _SearchParamsGet {
         $Profile{InvalidSearchTemplate} = 1;
     }
 
-    print STDERR " ************** PROFILE ******************\n";
-    print STDERR Dumper \%Profile;
     # get column names from Preferences
     my $PreferencesColumn = $Kernel::OM->Get('Kernel::System::JSON')->Decode(
         Data => $Preferences{ $Self->{PrefKeyColumns} },
@@ -2245,11 +2240,12 @@ sub _SearchParamsGet {
 
     # get config object
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+
     if ( $ConfigObject->Get("Ticket::Frontend::AgentTicketSearch")->{ExtendedSearchCondition} ) {
         $TicketSearch{ConditionInline} = $ConfigObject->Get("Ticket::Frontend::AgentTicketSearch")->{ExtendedSearchCondition};
     }
 
-    # dynamic field parameters
+    # parameters from dynamic fields
     my %AttributeLookup;
 
     # create attribute lookup table
@@ -2261,19 +2257,17 @@ sub _SearchParamsGet {
     my %DynamicFieldSearchParameters;
 
     # get dynamic field config for frontend module
-    my $Config = $ConfigObject->Get("Ticket::Frontend::AgentTicketSearch");
+    my $Config             = $ConfigObject->Get("Ticket::Frontend::AgentTicketSearch");
     my $DynamicFieldFilter = $Config->{DynamicField};
 
     # get the dynamic fields for ticket object
-    my $DynamicFieldObject  = $Kernel::OM->Get('Kernel::System::DynamicField');
-    my $DynamicField = $DynamicFieldObject->DynamicFieldListGet(
+    my $DynamicFieldObject = $Kernel::OM->Get('Kernel::System::DynamicField');
+    my $DynamicField       = $DynamicFieldObject->DynamicFieldListGet(
         Valid       => 1,
         ObjectType  => [ 'Ticket', 'Article' ],
         FieldFilter => $DynamicFieldFilter || {},
     );
 
-    #print STDERR "*********************\n DF \n******************\n";
-    #print STDERR Dumper $DynamicField;
     DYNAMICFIELD:
     for my $DynamicFieldConfig ( @{$DynamicField} ) {
         next DYNAMICFIELD if !IsHashRefWithData($DynamicFieldConfig);
@@ -2285,12 +2279,8 @@ sub _SearchParamsGet {
 
         next DYNAMICFIELD if !IsArrayRefWithData($SearchFieldPreferences);
 
-        #print STDERR "*********************\n DF Preferences \n******************\n";
         PREFERENCE:
         for my $Preference ( @{$SearchFieldPreferences} ) {
-
-            #print STDERR Dumper $Preference;
-
             if (
                 !$AttributeLookup{
                     'LabelSearch_DynamicField_'
@@ -2303,7 +2293,7 @@ sub _SearchParamsGet {
             }
 
             # extract the dynamic field value from the profile
-            my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
+            my $LayoutObject    = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
             my $SearchParameter = $BackendObject->SearchFieldParameterBuild(
                 DynamicFieldConfig => $DynamicFieldConfig,
                 Profile            => \%Profile,
@@ -2324,7 +2314,7 @@ sub _SearchParamsGet {
         UserID => $Self->{UserID},
     );
 
-    # prepare archive flag
+    # parameters from the archive flag
     if ( $ConfigObject->Get('Ticket::ArchiveSystem') ) {
 
         $Profile{SearchInArchive} ||= '';
@@ -2339,7 +2329,7 @@ sub _SearchParamsGet {
         }
     }
 
-    # native time parameters (e.g. create time, close time, etc.)
+    # parameters from native time fields
     my %TimeMap = (
         ArticleCreate    => 'ArticleTime',
         TicketCreate     => 'Time',
