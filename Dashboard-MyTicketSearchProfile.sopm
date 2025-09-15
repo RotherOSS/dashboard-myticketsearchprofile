@@ -6,7 +6,7 @@
     <Vendor>Rother OSS GmbH</Vendor>
     <URL>https://otobo.io/</URL>
     <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
-    <Description Lang="en">Provides a widget in the Dashboard with the tickets returned by one of the user ticket search templates</Description>
+    <Description Lang="en">Provides a widget in the Dashboard with the tickets returned by one of the user ticket search templates.</Description>
     <Filelist>
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/AgentDashboardTicketProfileSearch.tt" />
         <File Permission="660" Location="Kernel/Output/HTML/Dashboard/TicketProfileSearch.pm" />
