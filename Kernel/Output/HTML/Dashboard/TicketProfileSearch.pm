@@ -202,7 +202,6 @@ sub new {
     my $AdditionalPreferencesKey = 'UserDashboardTicketGenericAdditionalFilter' . $Self->{Name};
     if ( $Self->{Name} eq $Name ) {
         $Self->{Filter}           = $ParamObject->GetParam( Param => 'Filter' )           || '';
-        $Self->{AdditionalFilter} = $ParamObject->GetParam( Param => 'AdditionalFilter' ) || '';
     }
 
     # Remember the selected filter in the session.
@@ -226,33 +225,6 @@ sub new {
     }
     else {
         $Self->{Filter} = $Self->{Session}{$PreferencesKey} || $Self->{Config}->{Filter} || 'All';
-    }
-
-    # The additional filter are at the moment only relevant for the customer user information center.
-    if ( $Self->{Action} eq 'AgentCustomerUserInformationCenter' ) {
-
-        # Remember the selected filter in the session.
-        if ( $Self->{AdditionalFilter} ) {
-
-            # update session
-            $Kernel::OM->Get('Kernel::System::AuthSession')->UpdateSessionID(
-                SessionID => $Self->{SessionID},
-                Key       => $AdditionalPreferencesKey,
-                Value     => $Self->{AdditionalFilter},
-            );
-
-            # update preferences
-            if ( !$ConfigObject->Get('DemoSystem') ) {
-                $UserObject->SetPreferences(
-                    UserID => $Self->{UserID},
-                    Key    => $AdditionalPreferencesKey,
-                    Value  => $Self->{AdditionalFilter},
-                );
-            }
-        }
-        else {
-            $Self->{AdditionalFilter} = $Self->{$AdditionalPreferencesKey} || $Self->{Config}->{AdditionalFilter} || 'AssignedToCustomerUser';
-        }
     }
 
     $Self->{PrefSearchTemplate} = 'UserDashboardPref' . $Self->{Name} . '-SearchTemplate';
@@ -303,29 +275,6 @@ sub new {
         'EscalationResponseTime' => 1,
         'EscalationSolutionTime' => 1,
     };
-
-    # remove CustomerID if Customer Information Center
-    if ( $Self->{Action} eq 'AgentCustomerInformationCenter' ) {
-        delete $Self->{ColumnFilter}->{CustomerID};
-        delete $Self->{GetColumnFilter}->{CustomerID};
-        delete $Self->{GetColumnFilterSelect}->{CustomerID};
-        delete $Self->{ValidFilterableColumns}->{CustomerID};
-        delete $Self->{ValidSortableColumns}->{CustomerID};
-    }
-    elsif (
-        $Self->{Action} eq 'AgentCustomerUserInformationCenter'
-        && $Self->{AdditionalFilter} eq 'AssignedToCustomerUser'
-        )
-    {
-
-        for my $DeleteColumnFilter (qw(CustomerUserLogin CustomerUserLoginRaw)) {
-            delete $Self->{ColumnFilter}->{$DeleteColumnFilter};
-            delete $Self->{GetColumnFilter}->{$DeleteColumnFilter};
-        }
-        delete $Self->{GetColumnFilter}->{CustomerUserID};
-        delete $Self->{GetColumnFilterSelect}->{CustomerUserID};
-        delete $Self->{ValidFilterableColumns}->{CustomerUserID};
-    }
 
     $Self->{UseTicketService} = $ConfigObject->Get('Ticket::Service') || 0;
 
@@ -502,21 +451,13 @@ sub FilterContent {
     {
         my %SearchParams        = $Self->_SearchParamsGet(%Param);
         my %TicketSearch        = %{ $SearchParams{TicketSearch} };
-        my %TicketSearchSummary = %{ $SearchParams{TicketSearchSummary} };
+        my %TicketSearchSummary;
 
         # add process management search terms
         if ( $Self->{Config}->{IsProcessWidget} ) {
             $TicketSearch{ 'DynamicField_' . $Self->{ProcessManagementProcessID} } = {
                 Like => $Self->{ProcessList},
             };
-        }
-
-        # Add the additional filter to the ticket search param.
-        if ( $Self->{AdditionalFilter} ) {
-            %TicketSearch = (
-                %TicketSearch,
-                %{ $TicketSearchSummary{ $Self->{AdditionalFilter} } },
-            );
         }
 
         if ( !$Self->{Config}->{IsProcessWidget} || IsArrayRefWithData( $Self->{ProcessList} ) ) {
@@ -587,15 +528,7 @@ sub Run {
     my %SearchParams        = $Self->_SearchParamsGet(%Param);
     my @Columns             = @{ $SearchParams{Columns} };
     my %TicketSearch        = %{ $SearchParams{TicketSearch} };
-    my %TicketSearchSummary = %{ $SearchParams{TicketSearchSummary} };
-
-    # Add the additional filter to the ticket search param.
-    if ( $Self->{AdditionalFilter} ) {
-        %TicketSearch = (
-            %TicketSearch,
-            %{ $TicketSearchSummary{ $Self->{AdditionalFilter} } },
-        );
-    }
+    my %TicketSearchSummary;
 
     my $UserObject  = $Kernel::OM->Get('Kernel::System::User');
     my %Preferences = $UserObject->GetPreferences(
@@ -655,11 +588,6 @@ sub Run {
     # CustomerUserInformationCenter shows data per CustomerUserID
     if ( $Param{CustomerUserID} ) {
         $CacheKey .= '-' . $Param{CustomerUserID};
-    }
-
-    # Add the additional filter always to the cache key, if a additional filter exists.
-    if ( $Self->{AdditionalFilter} ) {
-        $CacheKey .= '-' . $Self->{AdditionalFilter};
     }
 
     # get cache object
@@ -744,16 +672,6 @@ sub Run {
             # Copy original column filter.
             my %ColumnFilter = %{ $Self->{ColumnFilter} || {} };
 
-            # Loop through all column filter elements.
-            for my $Element ( sort keys %ColumnFilter ) {
-
-                # Verify if current column filter element is already present in the ticket search
-                #   summary, to delete it from the column filter hash.
-                if ( $Self->{AdditionalFilter} && $TicketSearchSummary{ $Self->{AdditionalFilter} }->{$Element} ) {
-                    delete $ColumnFilter{$Element};
-                }
-            }
-
             # add process management search terms
             if ( $Self->{Config}->{IsProcessWidget} ) {
                 $TicketSearch{ 'DynamicField_' . $Self->{ProcessManagementProcessID} } = {
@@ -794,9 +712,6 @@ sub Run {
 
     # Set the css class for the selected filter and additional filter.
     $Summary->{ $Self->{Filter} . '::Selected' } = 'Selected';
-    if ( $Self->{AdditionalFilter} ) {
-        $Summary->{ $Self->{AdditionalFilter} . '::Selected' } = 'Selected';
-    }
 
     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
 
@@ -837,7 +752,6 @@ sub Run {
     my $LinkPage =
         'Subaction=Element;Name=' . $Self->{Name}
         . ';Filter=' . $Self->{Filter}
-        . ';AdditionalFilter=' . ( $Self->{AdditionalFilter} || '' )
         . ';SortBy=' .           ( $Self->{SortBy}           || '' )
         . ';OrderBy=' .          ( $TicketSearch{OrderBy}    || '' )
         . $ColumnFilterLink
@@ -1868,7 +1782,6 @@ sub Run {
             Name => $Self->{Name},
             %{$Summary},
             FilterValue      => $Self->{Filter},
-            AdditionalFilter => $Self->{AdditionalFilter},
             CustomerID       => $Self->{CustomerID},
             CustomerUserID   => $Self->{CustomerUserID},
         },
@@ -2459,7 +2372,6 @@ sub _SearchParamsGet {
     return (
         Columns             => \@Columns,
         TicketSearch        => \%TicketSearch,
-        TicketSearchSummary => {},
     );
 }
 
