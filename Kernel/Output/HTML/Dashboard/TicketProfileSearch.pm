@@ -382,7 +382,7 @@ sub Preferences {
             Name        => $Self->{PrefSearchTemplate},
             Block       => 'Option',
             Data        => \%Profiles,
-            SelectedID  => $Self->{PageShown},
+            SelectedID  => $Preferences{ $Self->{PrefSearchTemplate} },
             Translation => 0,
         },
         {
