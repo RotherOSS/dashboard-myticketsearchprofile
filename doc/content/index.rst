@@ -33,7 +33,7 @@ Basic Usage
 -------------------
 Install by opening the Package Manager module from the Administration group in the Agent Interface. Select the package named Dashboard-MyTicketSearchProfile from the Online Repository. Click the associated  *Install* link on that line and respond affirmatively to any confirmation questions that follow.
 
-In the Dasboard view, move the mouse pointer to the top right corner of the *Tickets Profile Search* widget, and click on the gear icon that will appear. Select the search template from the *Stored Search Profiles* field list and click on the *Save Changes* button. The widget will then display the corresponding tickets.
+In the Dasboard view, move the mouse pointer to the top right corner of the *Tickets Profile Search* widget, and click on the gear icon that will appear. Select the search template from the *Stored Search Profiles* field list and click on the *Save Changes* button. The widget will then display the corresponding tickets (see Figure 2.1).
 
 
  .. figure:: images/search_templates_dropdown.png
