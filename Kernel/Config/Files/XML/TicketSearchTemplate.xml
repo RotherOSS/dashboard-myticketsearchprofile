@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otobo_config version="2.0" init="Application">
     <Setting Name="DashboardBackend###0150-TicketSearchTemplate" Required="0" Valid="1">
-        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
+        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Group" is used to restrict the access to the plugin (e. g. Group: admin;group1;group2;). "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
         <Navigation>Frontend::Agent::View::Dashboard</Navigation>
         <Value>
             <Hash>
@@ -13,6 +13,7 @@
                 <Item Key="Limit">10</Item>
                 <Item Key="Permission">rw</Item>
                 <Item Key="Block">ContentLarge</Item>
+                <Item Key="Group"></Item>
                 <Item Key="Default">1</Item>
                 <Item Key="CacheTTLLocal">0.5</Item>
                 <Item Key="DefaultColumns">
@@ -48,11 +49,12 @@
                     </Hash>
                 </Item>
                 <Item Key="Mandatory">0</Item>
+                    
             </Hash>
         </Value>
     </Setting>
     <Setting Name="DashboardBackend###0151-TicketSearchTemplate1" Required="0" Valid="0">
-        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
+        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Group" is used to restrict the access to the plugin (e. g. Group: admin;group1;group2;). "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
         <Navigation>Frontend::Agent::View::Dashboard</Navigation>
         <Value>
             <Hash>
@@ -64,6 +66,7 @@
                 <Item Key="Limit">10</Item>
                 <Item Key="Permission">rw</Item>
                 <Item Key="Block">ContentLarge</Item>
+                <Item Key="Group"></Item>
                 <Item Key="Default">1</Item>
                 <Item Key="CacheTTLLocal">0.5</Item>
                 <Item Key="DefaultColumns">
@@ -103,7 +106,7 @@
         </Value>
     </Setting>
     <Setting Name="DashboardBackend###0152-TicketSearchTemplate2" Required="0" Valid="0">
-        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
+        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Group" is used to restrict the access to the plugin (e. g. Group: admin;group1;group2;). "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
         <Navigation>Frontend::Agent::View::Dashboard</Navigation>
         <Value>
             <Hash>
@@ -115,6 +118,7 @@
                 <Item Key="Limit">10</Item>
                 <Item Key="Permission">rw</Item>
                 <Item Key="Block">ContentLarge</Item>
+                <Item Key="Group"></Item>
                 <Item Key="Default">1</Item>
                 <Item Key="CacheTTLLocal">0.5</Item>
                 <Item Key="DefaultColumns">
@@ -154,7 +158,7 @@
         </Value>
     </Setting>
     <Setting Name="DashboardBackend###0153-TicketSearchTemplate3" Required="0" Valid="0">
-        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
+        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Group" is used to restrict the access to the plugin (e. g. Group: admin;group1;group2;). "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
         <Navigation>Frontend::Agent::View::Dashboard</Navigation>
         <Value>
             <Hash>
@@ -166,6 +170,7 @@
                 <Item Key="Limit">10</Item>
                 <Item Key="Permission">rw</Item>
                 <Item Key="Block">ContentLarge</Item>
+                <Item Key="Group"></Item>
                 <Item Key="Default">1</Item>
                 <Item Key="CacheTTLLocal">0.5</Item>
                 <Item Key="DefaultColumns">
@@ -205,7 +210,7 @@
         </Value>
     </Setting>
     <Setting Name="DashboardBackend###0154-TicketSearchTemplate4" Required="0" Valid="0">
-        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
+        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Group" is used to restrict the access to the plugin (e. g. Group: admin;group1;group2;). "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
         <Navigation>Frontend::Agent::View::Dashboard</Navigation>
         <Value>
             <Hash>
@@ -217,6 +222,7 @@
                 <Item Key="Limit">10</Item>
                 <Item Key="Permission">rw</Item>
                 <Item Key="Block">ContentLarge</Item>
+                <Item Key="Group"></Item>
                 <Item Key="Default">1</Item>
                 <Item Key="CacheTTLLocal">0.5</Item>
                 <Item Key="DefaultColumns">
@@ -256,7 +262,7 @@
         </Value>
     </Setting>
     <Setting Name="DashboardBackend###0155-TicketSearchTemplate5" Required="0" Valid="0">
-        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
+        <Description Translatable="1">Parameters for the dashboard backend of the tickets overview by search template of the agent interface. "Limit" is the number of entries shown by default. "Group" is used to restrict the access to the plugin (e. g. Group: admin;group1;group2;). "Default" determines if the plugin is enabled by default or if the user needs to enable it manually. "CacheTTLLocal" is the cache time in minutes for the plugin. "Mandatory" determines if the plugin is always shown and can not be removed by agents. Note: Only Ticket attributes and Dynamic Fields (DynamicField_NameX) are allowed for DefaultColumns.</Description>
         <Navigation>Frontend::Agent::View::Dashboard</Navigation>
         <Value>
             <Hash>
@@ -268,6 +274,7 @@
                 <Item Key="Limit">10</Item>
                 <Item Key="Permission">rw</Item>
                 <Item Key="Block">ContentLarge</Item>
+                <Item Key="Group"></Item>
                 <Item Key="Default">1</Item>
                 <Item Key="CacheTTLLocal">0.5</Item>
                 <Item Key="DefaultColumns">
