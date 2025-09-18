@@ -736,6 +736,7 @@ sub Run {
         $LayoutObject->Block(
             Name => 'SelectedTemplateAndTicketsCount',
             Data => {
+                Name                => $Self->{Name},
                 ProfileTemplateName => $Preferences{ $Self->{PrefSearchTemplate} },
                 Count               => $Summary->{All},
             },

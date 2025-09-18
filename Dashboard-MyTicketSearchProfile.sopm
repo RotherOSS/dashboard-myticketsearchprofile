@@ -11,6 +11,7 @@
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/AgentDashboardTicketProfileSearch.tt" />
         <File Permission="660" Location="Kernel/Output/HTML/Dashboard/TicketProfileSearch.pm" />
         <File Permission="660" Location="Kernel/Config/Files/XML/TicketSearchTemplate.xml" />
+        <File Permission="660" Location="var/httpd/htdocs/skins/Agent/default/css/TemplateSearchWidget.css" />
     </Filelist>
 </otobo_package>
 

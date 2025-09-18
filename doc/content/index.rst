@@ -9,7 +9,7 @@ Overview
 ========
 Summary
 -------
-This package adds a widget to the Dashboard with the tickets returned by a given customer ticket search template
+This package adds a widget to the Dashboard with the tickets returned by a given custom ticket search template
 
 Configuration
 =============

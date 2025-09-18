@@ -18,7 +18,7 @@
 <div class="DashboardActions">
 [% RenderBlockStart("SelectedTemplateAndTicketsCount") %]
     <ul class="Tab Actions">
-        <li class="Last">[% Translate(Data.ProfileTemplateName) | html %] ([% Data.Count | html %])</li>
+        <li class="Last"><a href="#" id="Dashboard[% Data.Name | html %]All" data-filter="All">[% Translate(Data.ProfileTemplateName) | html %] ([% Data.Count | html %])</a></li>
     </ul>
 [% RenderBlockEnd("SelectedTemplateAndTicketsCount") %]
 [% RenderBlockStart("NoTemplateSelected") %]
