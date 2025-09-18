@@ -201,7 +201,7 @@ sub new {
     my $PreferencesKey           = 'UserDashboardTicketGenericFilter' . $Self->{Name};
     my $AdditionalPreferencesKey = 'UserDashboardTicketGenericAdditionalFilter' . $Self->{Name};
     if ( $Self->{Name} eq $Name ) {
-        $Self->{Filter}           = $ParamObject->GetParam( Param => 'Filter' )           || '';
+        $Self->{Filter} = $ParamObject->GetParam( Param => 'Filter' ) || '';
     }
 
     # Remember the selected filter in the session.
@@ -449,8 +449,8 @@ sub FilterContent {
         || $HeaderColumn eq 'CustomerUserID'
         )
     {
-        my %SearchParams        = $Self->_SearchParamsGet(%Param);
-        my %TicketSearch        = %{ $SearchParams{TicketSearch} };
+        my %SearchParams = $Self->_SearchParamsGet(%Param);
+        my %TicketSearch = %{ $SearchParams{TicketSearch} };
         my %TicketSearchSummary;
 
         # add process management search terms
@@ -525,9 +525,9 @@ sub FilterContent {
 sub Run {
     my ( $Self, %Param ) = @_;
 
-    my %SearchParams        = $Self->_SearchParamsGet(%Param);
-    my @Columns             = @{ $SearchParams{Columns} };
-    my %TicketSearch        = %{ $SearchParams{TicketSearch} };
+    my %SearchParams = $Self->_SearchParamsGet(%Param);
+    my @Columns      = @{ $SearchParams{Columns} };
+    my %TicketSearch = %{ $SearchParams{TicketSearch} };
     my %TicketSearchSummary;
 
     my $UserObject  = $Kernel::OM->Get('Kernel::System::User');
@@ -732,6 +732,21 @@ sub Run {
         },
     );
 
+    if ( $Preferences{ $Self->{PrefSearchTemplate} } ) {
+        $LayoutObject->Block(
+            Name => 'SelectedTemplateAndTicketsCount',
+            Data => {
+                ProfileTemplateName => $Preferences{ $Self->{PrefSearchTemplate} },
+                Count               => $Summary->{All},
+            },
+        );
+    }
+    else {
+        $LayoutObject->Block(
+            Name => 'NoTemplateSelected',
+        );
+    }
+
     my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
 
     # add page nav bar
@@ -752,8 +767,8 @@ sub Run {
     my $LinkPage =
         'Subaction=Element;Name=' . $Self->{Name}
         . ';Filter=' . $Self->{Filter}
-        . ';SortBy=' .           ( $Self->{SortBy}           || '' )
-        . ';OrderBy=' .          ( $TicketSearch{OrderBy}    || '' )
+        . ';SortBy=' . ( $Self->{SortBy} || '' )
+        . ';OrderBy=' . ( $TicketSearch{OrderBy} || '' )
         . $ColumnFilterLink
         . ';';
 
@@ -1781,9 +1796,9 @@ sub Run {
             %{ $Self->{Config} },
             Name => $Self->{Name},
             %{$Summary},
-            FilterValue      => $Self->{Filter},
-            CustomerID       => $Self->{CustomerID},
-            CustomerUserID   => $Self->{CustomerUserID},
+            FilterValue    => $Self->{Filter},
+            CustomerID     => $Self->{CustomerID},
+            CustomerUserID => $Self->{CustomerUserID},
         },
         AJAX => $Param{AJAX},
     );
@@ -2370,8 +2385,8 @@ sub _SearchParamsGet {
     }
 
     return (
-        Columns             => \@Columns,
-        TicketSearch        => \%TicketSearch,
+        Columns      => \@Columns,
+        TicketSearch => \%TicketSearch,
     );
 }
 

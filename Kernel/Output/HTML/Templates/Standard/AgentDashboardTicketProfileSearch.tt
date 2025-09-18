@@ -16,10 +16,16 @@
 
 [% RenderBlockStart("ContentLargeTicketGenericFilter") %]
 <div class="DashboardActions">
-
+[% RenderBlockStart("SelectedTemplateAndTicketsCount") %]
     <ul class="Tab Actions">
-        <li class="[% Data.item("All::Selected") | html %] Last"><a href="#" id="Dashboard[% Data.Name | html %]All" data-filter="All">[% Translate(Data.ProfileTemplateName) | html %] ([% Data.All | html %])</a></li>
+        <li class="Last">[% Translate(Data.ProfileTemplateName) | html %] ([% Data.Count | html %])</li>
     </ul>
+[% RenderBlockEnd("SelectedTemplateAndTicketsCount") %]
+[% RenderBlockStart("NoTemplateSelected") %]
+    <ul class="Tab Actions">
+        <li class="Last">[% Translate("No search template selected") | html %]</li>
+    </ul>
+[% RenderBlockEnd("NoTemplateSelected") %]
 </div>
 
 [% RenderBlockStart("ContentLargeTicketGenericFilterNavBar") %]
