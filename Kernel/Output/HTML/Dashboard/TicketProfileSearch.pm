@@ -535,7 +535,8 @@ sub Run {
         UserID => $Self->{UserID},
     );
 
-    my $CacheKey = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $Preferences{ $Self->{PrefSearchTemplate} };
+    my $PrefSearchTemplate = $Preferences{ $Self->{PrefSearchTemplate}} ? $Preferences{ $Self->{PrefSearchTemplate}} : '';
+    my $CacheKey = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $PrefSearchTemplate;
     my $CacheColumns = join(
         ',',
         map { $_ . '=>' . $Self->{GetColumnFilterSelect}->{$_} } sort keys %{ $Self->{GetColumnFilterSelect} }
@@ -2030,12 +2031,21 @@ sub _SearchParamsGet {
     );
 
     my $SearchProfileObject = $Kernel::OM->Get('Kernel::System::SearchProfile');
-    my %Profile             = $SearchProfileObject->SearchProfileGet(
-        Base      => 'TicketSearch',
-        Name      => $Preferences{ $Self->{PrefSearchTemplate} },
-        UserLogin => $Self->{UserLogin},
-    );
-
+    my %Profile;
+    if ($Preferences{ $Self->{PrefSearchTemplate} }) {
+        %Profile = $SearchProfileObject->SearchProfileGet(
+            Base      => 'TicketSearch',
+            Name      => $Preferences{ $Self->{PrefSearchTemplate} },
+            UserLogin => $Self->{UserLogin},
+        );
+        my %SearchProfiles = $SearchProfileObject->SearchProfileList(
+            Base      => 'TicketSearch',
+            UserLogin => $Self->{UserLogin},
+        );
+        if (!$SearchProfiles{$Preferences{ $Self->{PrefSearchTemplate}}}) {
+            $Profile{InvalidSearchTemplate} = 1;
+        }
+    }
     if ( !%Profile ) {
         $Profile{InvalidSearchTemplate} = 1;
     }
