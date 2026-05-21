@@ -535,6 +535,7 @@ sub Run {
         UserID => $Self->{UserID},
     );
 
+    # if no search template is set nothing will be found
     my $PrefSearchTemplate = $Preferences{ $Self->{PrefSearchTemplate}} ? $Preferences{ $Self->{PrefSearchTemplate}} : '';
     my $CacheKey = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $PrefSearchTemplate;
     my $CacheColumns = join(
@@ -2038,13 +2039,6 @@ sub _SearchParamsGet {
             Name      => $Preferences{ $Self->{PrefSearchTemplate} },
             UserLogin => $Self->{UserLogin},
         );
-        my %SearchProfiles = $SearchProfileObject->SearchProfileList(
-            Base      => 'TicketSearch',
-            UserLogin => $Self->{UserLogin},
-        );
-        if (!$SearchProfiles{$Preferences{ $Self->{PrefSearchTemplate}}}) {
-            $Profile{InvalidSearchTemplate} = 1;
-        }
     }
     if ( !%Profile ) {
         $Profile{InvalidSearchTemplate} = 1;
