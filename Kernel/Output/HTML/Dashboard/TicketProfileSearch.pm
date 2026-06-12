@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -536,9 +536,9 @@ sub Run {
     );
 
     # if no search template is set nothing will be found
-    my $PrefSearchTemplate = $Preferences{ $Self->{PrefSearchTemplate}} ? $Preferences{ $Self->{PrefSearchTemplate}} : '';
-    my $CacheKey = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $PrefSearchTemplate;
-    my $CacheColumns = join(
+    my $PrefSearchTemplate = $Preferences{ $Self->{PrefSearchTemplate} } ? $Preferences{ $Self->{PrefSearchTemplate} } : '';
+    my $CacheKey           = join '-', $Self->{Name}, $Self->{Action}, $Self->{PageShown}, $Self->{StartHit}, $Self->{UserID}, $PrefSearchTemplate;
+    my $CacheColumns       = join(
         ',',
         map { $_ . '=>' . $Self->{GetColumnFilterSelect}->{$_} } sort keys %{ $Self->{GetColumnFilterSelect} }
     );
@@ -2033,7 +2033,7 @@ sub _SearchParamsGet {
 
     my $SearchProfileObject = $Kernel::OM->Get('Kernel::System::SearchProfile');
     my %Profile;
-    if ($Preferences{ $Self->{PrefSearchTemplate} }) {
+    if ( $Preferences{ $Self->{PrefSearchTemplate} } ) {
         %Profile = $SearchProfileObject->SearchProfileGet(
             Base      => 'TicketSearch',
             Name      => $Preferences{ $Self->{PrefSearchTemplate} },
