@@ -15,4 +15,3 @@
         <File Permission="660" Location="var/httpd/htdocs/skins/Agent/default/css/TemplateSearchWidget.css" />
     </Filelist>
 </otobo_package>
-
